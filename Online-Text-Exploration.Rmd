@@ -1,0 +1,170 @@
+---
+title: "Smart KeyBoard-Data Exploration"
+author: trelo
+output: html_document
+---
+
+## Abstract
+
+The objective is to analyze three large corpus of text documents to discover the structure in the data and how words are put together.  
+
+The **blogs** and **news** datasets found are similar comapred to the **twitter** dataset. This could be due to the 140 character limit of Twitter messages.
+
+## Introduction
+
+In this report we explore at three datasets of US English text, a set of internet blogs posts, a set of internet news articles, and a set of twitter messages.
+
+The reports lists following forms of information:
+
+1. Files Information   
+  1.1. File Size  
+  1.2 Number of lines, Number of non-empty lines
+2. File details  
+  2.1 Number of words  
+  2.2 Distribution of words (quantiles and plot)  
+  2.3 Number of characters  
+  2.4 Number of non-white characters  
+
+In the following section we will describe the data collection process, the section after that gives the results of the data exploration, we finally present conclusion for the analysis.
+
+For our analysis we use the R computing environment [R](www.cran.r-project.org), as well as the libraries stringi [stringi](www.cran.r-project.org/package=stringi) and ggplot2 [ggplot2](www.ggplot2.org). 
+
+This report is compiled using [rmarkdown](rmarkdown.rstudio.com) and [knitr](cran.r-project.org/package=knitr). Finally, the milestone report is created in RStudio IDE [RStudio](www.rstudio.com).
+
+## Data
+
+The data is presented in compressed archive format, downloadable from [here](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip).
+
+
+```{r loaddata, cache=TRUE, results='hide'}
+# Download data
+dest_file <- "Coursera-SwiftKey.zip"
+source_file <- "http://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+
+# execute the download
+download.file(source_file, dest_file)
+
+# extract the files from the zip file
+unzip(dest_file)
+```
+
+
+Unzip and list files
+
+```{r inspectfile, cache=TRUE, warning=FALSE, results='hide'}
+# Ensure files are unzipped
+unzip(dest_file, list = TRUE )
+
+# Inspect data
+list.files("final")
+list.files("final/en_US")
+```
+
+The **blogs** and **twitter** datasets are in plain-text files, whereas the **news** dataset is binary format. 
+
+Import  files
+
+```{r importfiles, warning=FALSE}
+# Import blogs and twitter datasets in text mode
+blogsData <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
+twitterData <- readLines("final/en_US/en_US.twitter.txt", encoding="UTF-8")
+
+# Import the news dataset in binary mode
+con <- file("final/en_US/en_US.news.txt", open="rb")
+newsData <- readLines(con, encoding="UTF-8")
+close(con)
+rm(con)
+```
+
+
+## Exploratory Analysis
+
+Analysis of the file size and no. of lines.
+
+```{r filesize, warning=FALSE}
+# file size (in MegaBytes/MB)
+file.info("final/en_US/en_US.blogs.txt")$size   / 1024^2
+file.info("final/en_US/en_US.news.txt")$size    / 1024^2
+file.info("final/en_US/en_US.twitter.txt")$size / 1024^2
+
+#Sample data - work with 5% data
+set.seed(4321)
+l <- length(twitterData)
+twitter_sample<-twitterData[sample.int(l,round(.05*l))]
+l <- length(newsData)
+news_sample<-newsData[sample.int(l,round(.05*l))]
+l <- length(blogsData)
+blogs_sample<-blogsData[sample.int(l,round(.05*l))]
+```
+
+Load required libraries for analysis
+
+```{r loadlib, warning=FALSE}
+# library for character string analysis
+library(stringi)
+# library for plotting
+library(ggplot2)
+library(grid)
+library(gridExtra)
+```
+
+Analyze lines and characters
+
+```{r linechar, warning=FALSE}
+stri_stats_general(blogsData)
+stri_stats_general(newsData)
+stri_stats_general(twitterData)
+```
+
+Next we count the words per line. The below section summarises the distibution of these counts per dataset, using summary statistics and a distibution plot. 
+
+Analyze **Blogs** corpus.
+
+```{r sumblogs, warning=FALSE}
+blogs_words <- stri_count_words(blogsData)
+blogs_sample_words <- stri_count_words(blogs_sample)
+summary(blogs_words)
+b1 = qplot(blogs_words, main = "blog dataset")
+b2 = qplot(blogs_sample_words, main = "sample blog dataset")
+grid.arrange(b1, b2, ncol = 2)
+```
+
+Analyze **News** corpus
+
+```{r sumnews, warning=FALSE}
+news_words <- stri_count_words(newsData)
+news_sample_words <- stri_count_words(news_sample)
+summary(news_words)
+n1 = qplot(news_words, main="News Dataset")
+n2 = qplot(news_sample_words, main="Sample News Dataset")
+grid.arrange(n1, n2, ncol = 2)
+```
+
+Analyse **Twitter** corpus.
+
+```{r sumtwit, warning=FALSE}
+twitter_words <- stri_count_words(twitterData)
+twitter_sample_words <- stri_count_words(twitter_sample)
+summary(twitter_words)
+t1 = qplot(twitter_words, main="Twitter dataset")
+t2 = qplot(twitter_sample_words, main="Sample Twitter dataset")
+grid.arrange(t1, t2, ncol = 2)
+```
+
+## Conclusions
+
+We find that the **blogs** and **news** corpus consist of about 1 million items each, and the **twitter** corpus consist of over 2 million items. Twitter messages have a character limit of 140 (with exceptions for links), this explains why there are some many more items for a corpus of about the same size.
+
+This result is further supported by the fact that the number of characters is similar for all three datasets (around 200 million each). The data set in this exercise is quite large and even basic operations will take a significant amount of computing time. It is advisable to use of sampling to get desired results in a reasonable amount of time.
+
+Finally we find that the frequency distributions of the **blogs** and **news** datasets are similar. The frequency distribution of the **twitter** dataset is again different, as a result of the character limit.
+
+## References
+
+1.[Text mining infrastucture in R](www.jstatsoft.org/v25/i05) 
+
+2.[CRAN Task View: Natural Language Processing](http://cran.r-project.org/web/views/NaturalLanguageProcessing.html)
+
+
+
+
